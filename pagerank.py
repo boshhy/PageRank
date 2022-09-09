@@ -1,3 +1,4 @@
+from inspect import CORO_SUSPENDED
 import os
 import random
 import re
@@ -88,9 +89,24 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    print(transition_model(corpus, "2.html", damping_factor))
-    return {}
-    raise NotImplementedError
+    d = {}
+    all_pages = list(corpus)
+    random_page = random.choice(all_pages)
+
+    for page in corpus:
+        d[page] = 0
+
+    for i in range(n):
+        d[random_page] += 1
+
+        model = transition_model(corpus, random_page, damping_factor)
+
+        random_page = random.choices(all_pages, model.values())[0]
+
+    for page in d:
+        d[page] /= n
+
+    return d
 
 
 def iterate_pagerank(corpus, damping_factor):

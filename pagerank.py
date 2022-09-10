@@ -135,7 +135,6 @@ def iterate_pagerank(corpus, damping_factor):
     # Set up variables
     converged = False
     d = {}
-    # summation, converted_count = 0, 0
 
     # Set up constants
     N = len(corpus)

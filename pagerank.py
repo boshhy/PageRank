@@ -1,4 +1,3 @@
-from inspect import CORO_SUSPENDED
 import os
 import random
 import re
@@ -58,24 +57,32 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
+    # Create dictionary to return
+    # Get the length of links for current given page
     d = {}
     links = len(corpus[page])
 
+    # If we have at least one or more links on this page
+    # then do the following, otherwise go to 'else'
     if links:
         prob = damping_factor / links
         additional_prob = (1 - damping_factor) / len(corpus)
 
+        # All pages get additional probablity added to them
         for page_link in corpus:
             d[page_link] = additional_prob
 
+        # Each page connected by the page get prob added to it
         for page_link in corpus[page]:
             d[page_link] += prob
 
+    # Every page is equally chosen
     else:
         prob = 1 / len(corpus)
 
-        for link in corpus:
-            d[link] = prob
+        # Add the same probabilty to each page
+        for p in corpus:
+            d[p] = prob
 
     return d
 
@@ -89,20 +96,27 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    # Set up variables dictionary, list, and random page chosen
     d = {}
     all_pages = list(corpus)
     random_page = random.choice(all_pages)
 
+    # Set all pages to 0
     for page in corpus:
         d[page] = 0
 
+    # Repeat this process n times for more accurate result
     for i in range(n):
+        # If the page was chosen add 1 to it
         d[random_page] += 1
 
+        # Get model results for the random page chosen
         model = transition_model(corpus, random_page, damping_factor)
 
+        # Get a random page from the weighted model 'ranks'
         random_page = random.choices(all_pages, model.values())[0]
 
+    # Divide all page values by N to normalize values
     for page in d:
         d[page] /= n
 
@@ -118,8 +132,49 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    return {}
-    raise NotImplementedError
+    # Set up variables
+    converged = False
+    d = {}
+    # summation, converted_count = 0, 0
+
+    # Set up constants
+    N = len(corpus)
+    random_odds = 1 / N
+    odds = (1-damping_factor) / N
+
+    # Every page gets the same starting value
+    for page in corpus:
+        d[page] = random_odds
+
+    # Keep iterating while we haven't converged
+    while not converged:
+        # Reset the converted count
+        converted_count = 0
+
+        # Get the page rank for every page
+        for page in corpus:
+            # Reset the summation
+            summation = 0
+
+            # Go check all the pages and see if it has a link to 'page'
+            for link in corpus:
+                # If it has a link to 'page' add it to the summation
+                if page in corpus[link]:
+                    # add to the summation using the provided formula
+                    summation += damping_factor * d[link] / len(corpus[link])
+
+            # Check to see if 'page' has converged, if so add 1 to count
+            if abs(d[page] - (odds + summation)) < 0.001:
+                converted_count += 1
+
+            # Update the page value with new iteration page value
+            d[page] = odds + summation
+
+        # If all pages have converged on this loop, then update 'converged' to True
+        if converted_count == N:
+            converged = True
+
+    return d
 
 
 if __name__ == "__main__":
